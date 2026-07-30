@@ -1,0 +1,959 @@
+{% extends "terrasat/base.html" %}
+{% load static %}
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+  :root {
+    --color-brand-dark: #152522;
+    --color-brand-primary: #1E3833;
+    --color-brand-sage: #4E8773;
+    --color-brand-accent: #2C5E4E;
+    --color-brand-bg: #F4F7F5;
+    --color-surface: #FFFFFF;
+    --color-surface-glass: rgba(255, 255, 255, 0.92);
+    --color-text-main: #111A18;
+    --color-text-sub: #4A5B57;
+    --color-text-muted: #7E918C;
+    --color-border: #E1E8E5;
+    --color-border-subtle: #EEF2F0;
+    --color-risk-high: #D93838;
+    --color-risk-bg: #FDF2F2;
+    --color-risk-border: #F87171;
+    --radius-xl: 18px;
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --radius-sm: 6px;
+    --shadow-card: 0 4px 20px -2px rgba(21, 37, 34, 0.08), 0 2px 6px -1px rgba(21, 37, 34, 0.04);
+    --shadow-floating: 0 12px 32px -4px rgba(21, 37, 34, 0.14), 0 4px 12px -2px rgba(21, 37, 34, 0.06);
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-text-main);
+  }
+
+  /* ── Dashboard Shell ── */
+  .dashboard-shell {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 28px 0;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 20px);
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-shell {
+      padding: 16px 16px 0;
+      min-height: calc(100vh - 16px);
+    }
+  }
+
+  /* ── Header ── */
+  .dashboard-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 4px 2px;
+  }
+
+  .dashboard-header .header-main {
+    max-width: 680px;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+
+  .header-brand .logo-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--color-brand-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(21, 37, 34, 0.15);
+    overflow: hidden;
+    transition: var(--transition-smooth);
+  }
+
+  .header-brand .logo-mark:hover {
+    transform: scale(1.05) rotate(-2deg);
+    box-shadow: 0 4px 14px rgba(21, 37, 34, 0.2);
+  }
+
+  .header-brand .logo-mark img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .header-brand .brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .header-brand .brand-text .brand-name {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-brand-sage);
+    line-height: 1;
+  }
+
+  .dashboard-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-brand-dark);
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .dashboard-header p {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin: 6px 0 0 0;
+    line-height: 1.5;
+  }
+
+  .staff-nav-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .staff-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-brand-primary) !important;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    transition: var(--transition-smooth);
+  }
+
+  .staff-nav-btn:hover {
+    background: var(--color-brand-dark);
+    color: #FFFFFF !important;
+    border-color: var(--color-brand-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(21, 37, 34, 0.12);
+  }
+
+  /* ── Map Layout ── */
+  .map-layout {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  #map-wrapper {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+    background: #EAEFEA;
+    margin-bottom: 0;
+  }
+
+  .platform-side-card {
+    width: 320px;
+    flex-shrink: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .platform-side-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #E8F4F0;
+    color: var(--color-brand-accent);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .platform-side-card h3 {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.3;
+    color: var(--color-brand-dark);
+  }
+
+  .platform-side-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-text-sub);
+  }
+
+  .platform-points {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .platform-points li {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: var(--color-brand-bg);
+    border: 1px solid var(--color-border-subtle);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--color-text-sub);
+  }
+
+  .platform-points strong {
+    color: var(--color-brand-dark);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  #map-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(244, 247, 245, 0.82);
+    backdrop-filter: blur(6px);
+    z-index: 1200;
+    color: var(--color-brand-dark);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  #map-loading .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(78, 135, 115, 0.2);
+    border-top-color: var(--color-brand-sage);
+    border-radius: 50%;
+    margin-right: 12px;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  #mathare-map {
+    height: 100%;
+    min-height: calc(100vh - 220px);
+    width: 100%;
+    z-index: 1;
+  }
+
+  @media (max-width: 768px) {
+    #mathare-map {
+      min-height: calc(100vh - 260px);
+    }
+  }
+
+  /* Leaflet Custom Tile Enhancements */
+  .leaflet-container {
+    font-family: var(--font-sans) !important;
+    background: #f0f4f2 !important;
+  }
+
+  /* Ward Marker Labels */
+  .ward-label {
+    background: var(--color-surface-glass) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border) !important;
+    border-radius: 20px !important;
+    padding: 3px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--color-brand-dark) !important;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: var(--transition-smooth);
+  }
+
+  .ward-label.high-risk {
+    background: var(--color-risk-high) !important;
+    color: #FFFFFF !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(217, 56, 56, 0.3);
+  }
+
+  /* ── Reset Button ── */
+  #reset-view-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    display: none;
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(12px);
+    color: var(--color-brand-dark);
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    box-shadow: var(--shadow-floating);
+    transition: var(--transition-smooth);
+  }
+
+  #reset-view-btn:hover {
+    background: var(--color-brand-dark);
+    color: #FFFFFF;
+    border-color: var(--color-brand-dark);
+    transform: translateY(-1px);
+  }
+
+  /* ── Floating Summary Cards ── */
+  .summary-card {
+    position: absolute;
+    bottom: 88px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: min(320px, calc(100% - 32px));
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border);
+    color: var(--color-brand-dark);
+    box-shadow: var(--shadow-floating);
+    z-index: 1000;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+  }
+
+  .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(21, 37, 34, 0.16);
+  }
+
+  .summary-card.left {
+    left: 16px;
+  }
+
+  .summary-card.right {
+    right: 16px;
+  }
+
+  .summary-card .summary-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .summary-card.risk .summary-icon {
+    background: linear-gradient(135deg, var(--color-risk-high), #F08A5D);
+  }
+
+  .summary-card.tasks .summary-icon {
+    background: linear-gradient(135deg, var(--color-brand-sage), var(--color-brand-primary));
+  }
+
+  .summary-card .summary-copy strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-brand-dark);
+    margin-bottom: 2px;
+  }
+
+  .summary-card .summary-copy span {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-sub);
+    line-height: 1.45;
+  }
+
+  .summary-card .summary-count {
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-brand-dark);
+  }
+
+  /* ── Bottom Dock ── */
+  .map-bottom-dock {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-floating);
+  }
+
+  .map-bottom-dock .legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-brand-dark);
+  }
+
+  .map-bottom-dock .legend .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-risk-high);
+    box-shadow: 0 0 0 3px rgba(217, 56, 56, 0.2);
+    flex-shrink: 0;
+  }
+
+  .map-bottom-dock .quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .map-bottom-dock .quick-actions a {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--color-brand-dark);
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+  }
+
+  .map-bottom-dock .quick-actions a:hover {
+    transform: translateY(-1px);
+    background: var(--color-brand-primary);
+  }
+
+  /* ── Floating Side Detail Panel ── */
+  #detail-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 320px;
+    max-height: calc(100% - 32px);
+    overflow-y: auto;
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-floating);
+    padding: 20px;
+    font-size: 13px;
+    display: none;
+    z-index: 1000;
+    animation: panelSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes panelSlideIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  #detail-panel h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--color-brand-dark);
+    letter-spacing: -0.01em;
+  }
+
+  .panel-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  #close-panel-btn {
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-sub);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 1;
+    float: none !important;
+    transition: var(--transition-smooth);
+  }
+
+  #close-panel-btn:hover {
+    background: var(--color-brand-dark);
+    color: #FFFFFF;
+    border-color: var(--color-brand-dark);
+  }
+
+  /* ── Data Stats & POI Styling ── */
+  #detail-panel .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+    color: var(--color-text-sub);
+    font-size: 12px;
+  }
+
+  #detail-panel .stat-row strong {
+    color: var(--color-brand-dark);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  #detail-panel .poi-type {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    margin-top: 4px;
+    background: rgba(21, 37, 34, 0.03);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--color-text-sub);
+  }
+
+  #detail-panel .poi-type span:last-child {
+    font-weight: 600;
+    color: var(--color-brand-primary);
+  }
+
+  /* ── Custom Scrollbar ── */
+  #detail-panel::-webkit-scrollbar {
+    width: 5px;
+  }
+  #detail-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #detail-panel::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 10px;
+  }
+
+  /* ── Loading State ── */
+  .panel-loading {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 32px 0;
+    font-size: 13px;
+  }
+
+  .panel-loading::after {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-brand-sage);
+    border-radius: 50%;
+    margin: 12px auto 0;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Accessibility ── */
+  #reset-view-btn:focus-visible,
+  #close-panel-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78, 135, 115, 0.25);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ── Mobile Detail Panel ── */
+  @media (max-width: 992px) {
+    .map-layout {
+      flex-direction: column;
+    }
+
+    .platform-side-card {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #detail-panel {
+      width: calc(100% - 32px);
+      right: 16px;
+      top: 16px;
+      max-height: calc(65vh - 32px);
+    }
+
+    .map-bottom-dock {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .map-bottom-dock .quick-actions {
+      width: 100%;
+    }
+
+    .map-bottom-dock .quick-actions a {
+      flex: 1;
+      text-align: center;
+    }
+
+    .summary-card {
+      bottom: 132px;
+      width: calc(100% - 24px);
+      left: 12px;
+      right: 12px;
+    }
+
+    .summary-card.right {
+      right: 12px;
+    }
+
+    #reset-view-btn {
+      top: 12px;
+      left: 12px;
+    }
+
+    .header-brand .logo-mark {
+      width: 36px;
+      height: 36px;
+    }
+
+    .header-brand .logo-mark img {
+      width: 22px;
+      height: 22px;
+    }
+  }
+</style>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="dashboard-shell">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-main">
+      <div class="header-brand">
+        <div class="logo-mark">
+          <!-- Placeholder logo asset -->
+          <img src="{% static 'images/logo.png' %}" alt="Terrasat" onerror="this.style.display='none'">
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Terrasat</span>
+          <h2>Mathare Ward-Level Flood Risk (UFN)</h2>
+        </div>
+      </div>
+      <p>Click a ward polygon on the map to inspect localized geospatial metrics, key POI density, and infrastructure risk data. Terrasat supports early flood prediction, rapid response, and preventive action by linking risk insights with maintenance tasks that help reduce flood severity and protect critical infrastructure.</p>
+    </div>
+    {% if request.user.is_staff %}
+    <div class="staff-nav-links">
+      <a href="{% url 'high_risk_dashboard' %}" class="staff-nav-btn">&#8594; Flood Risk Alert Dashboard</a>
+      <a href="{% url 'task_dashboard' %}" class="staff-nav-btn">&#8594; Maintenance Tasks</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Map + companion panel -->
+  <div class="map-layout">
+    <div id="map-wrapper">
+      <div id="map-loading" aria-live="polite"><div class="spinner"></div>Loading map data…</div>
+      <div id="mathare-map"></div>
+      <a href="{% url 'high_risk_dashboard' %}" class="summary-card risk left" id="risk-summary-card">
+        <div class="summary-icon">⚠</div>
+        <div class="summary-copy">
+          <strong>Risk summary</strong>
+          <span>Review wards flagged for flood alerts.</span>
+          <div class="summary-count" id="risk-summary-count">Loading…</div>
+        </div>
+      </a>
+      <a href="{% url 'task_dashboard' %}" class="summary-card tasks right" id="task-summary-card">
+        <div class="summary-icon">🛠</div>
+        <div class="summary-copy">
+          <strong>How the platform helps</strong>
+          <span>Terrasat combines early flood prediction, ward-level monitoring, and maintenance action to reduce flood severity and support infrastructure recovery.</span>
+          <div class="summary-count" id="task-summary-count">Predict • Act • Protect</div>
+        </div>
+      </a>
+      <div class="map-bottom-dock">
+        <div class="legend"><span class="dot"></span>High-risk ward (UFN &gt; 0.13 in one or more grids)</div>
+        <div class="quick-actions">
+          <a href="{% url 'high_risk_dashboard' %}">Open risk dashboard</a>
+          <a href="{% url 'task_dashboard' %}">Open tasks</a>
+        </div>
+      </div>
+      <button id="reset-view-btn">⤺ Back to full view</button>
+      <div id="detail-panel">
+        <div class="panel-header-wrapper">
+          <h3 id="panel-ward-name">Ward</h3>
+          <button id="close-panel-btn" aria-label="Close panel">✕</button>
+        </div>
+        <div id="panel-body">Loading…</div>
+      </div>
+    </div>
+
+    <aside class="platform-side-card">
+      <div class="platform-side-badge">What Terrasat does</div>
+      <h3>Prediction, action, and prevention in one workflow</h3>
+      <p>Terrasat helps Mathare anticipate flood risk early, coordinate response quickly, and support preventive work that reduces damage to homes, roads, and drainage systems.</p>
+      <ul class="platform-points">
+        <li><strong>Prediction</strong>Uses ward-level flood indicators and geospatial data to flag areas that may become vulnerable.</li>
+        <li><strong>Action</strong>Turns those insights into maintenance tasks and operational follow-up so teams can respond faster.</li>
+        <li><strong>Prevention</strong>Supports drainage clearing, infrastructure protection, and long-term resilience before severity increases.</li>
+      </ul>
+    </aside>
+  </div>
+</div>
+
+<script>
+  const DEFAULT_CENTER = [-1.2597, 36.8593];
+  const DEFAULT_ZOOM = 14;
+
+  const map = L.map('mathare-map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    maxZoom: 19,
+  }).addTo(map);
+
+  const WARD_PALETTE = [
+    '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+    '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4',
+    '#469990', '#dcbeff', '#9a6324', '#800000', '#aaffc3',
+    '#808000', '#000075', '#a9a9a9',
+  ];
+  const wardColorMap = {};
+  let colorIndex = 0;
+  function colorForWard(wardName) {
+    const key = wardName || 'unknown';
+    if (!(key in wardColorMap)) {
+      wardColorMap[key] = WARD_PALETTE[colorIndex % WARD_PALETTE.length];
+      colorIndex += 1;
+    }
+    return wardColorMap[key];
+  }
+
+  const detailPanel = document.getElementById('detail-panel');
+  const panelWardName = document.getElementById('panel-ward-name');
+  const panelBody = document.getElementById('panel-body');
+  const resetBtn = document.getElementById('reset-view-btn');
+  const closeBtn = document.getElementById('close-panel-btn');
+  const riskSummaryCount = document.getElementById('risk-summary-count');
+  const taskSummaryCount = document.getElementById('task-summary-count');
+  const mapLoading = document.getElementById('map-loading');
+
+  let fullViewBounds = null;
+
+  function showLoadingPanel(wardName) {
+    panelWardName.textContent = wardName;
+    panelBody.innerHTML = '<div class="panel-loading">Loading ward details…</div>';
+    detailPanel.style.display = 'block';
+  }
+
+  function renderPanel(data) {
+    panelWardName.textContent = data.ward_name || 'Unnamed area';
+
+    if (data.note) {
+      panelBody.innerHTML = `<div style="color:var(--color-text-muted);padding:16px 0;">${data.note}</div>`;
+      return;
+    }
+
+    let poiTypesHtml = '';
+    if (data.pois.by_type && data.pois.by_type.length) {
+      poiTypesHtml = data.pois.by_type
+        .map(t => `<div class="poi-type"><span>${t.fclass}</span><span>${t.count}</span></div>`)
+        .join('');
+    } else {
+      poiTypesHtml = '<div class="poi-type">No POI data</div>';
+    }
+
+    panelBody.innerHTML = `
+      <div class="stat-row"><span>Avg UFN (interim-weighted)</span><strong>${data.ufn_interim_weighted_avg ?? 'n/a'}</strong></div>
+      <div class="stat-row" style="font-size:11px;color:var(--color-text-muted);"><span>Based on</span><span>${data.ufn_rows_used}/${data.ufn_rows_total} polygons (${data.ufn_rows_null_excluded} excluded, no data)</span></div>
+      <div class="stat-row"><span>Schools</span><strong>${data.pois.schools}</strong></div>
+      <div class="stat-row"><span>Total POIs</span><strong>${data.pois.total}</strong></div>
+      <div class="stat-row"><span>Roads</span><strong>${data.roads.count} (${(data.roads.total_length_m/1000).toFixed(2)} km)</strong></div>
+      <div class="stat-row"><span>Waterways</span><strong>${data.waterways.count} (${(data.waterways.total_length_m/1000).toFixed(2)} km)</strong></div>
+      <div class="stat-row"><span>Buildings</span><strong>${data.buildings === null ? 'not available yet' : data.buildings}</strong></div>
+      <div class="stat-row"><span>Registered users</span><strong>${data.registered_users}</strong></div>
+      <div style="margin-top:14px;margin-bottom:6px;font-weight:600;font-size:12px;color:var(--color-brand-dark);">POI breakdown</div>
+      ${poiTypesHtml}
+    `;
+  }
+
+  function fetchWardDetail(fid, wardName) {
+    showLoadingPanel(wardName);
+    fetch(`/api/wards/${fid}/detail/`)
+      .then(res => res.json())
+      .then(data => renderPanel(data))
+      .catch(err => {
+        panelBody.innerHTML = '<div style="color:var(--color-risk-high);padding:16px 0;text-align:center;font-size:13px;">Failed to load details.</div>';
+        console.error('Ward detail fetch failed:', err);
+      });
+  }
+
+  let flaggedWardNames = new Set();
+
+  function isHighRisk(wardName) {
+    if (!wardName) return false;
+    const stripped = wardName.replace(/ward/i, '').trim().toLowerCase();
+    for (const flagged of flaggedWardNames) {
+      if (flagged.replace(/ward/i, '').trim().toLowerCase() === stripped) return true;
+    }
+    return false;
+  }
+
+  Promise.all([
+    fetch("{% url 'high_risk_public_summary' %}").then(res => res.json()).catch(() => ({ flagged_wards: [] })),
+    fetch("{% url 'task_public_summary' %}").then(res => res.json()).catch(() => ({ total_tasks: 0, reported: 0, in_progress: 0, resolved: 0 })),
+    fetch("{% url 'mathare_flood_geojson' %}").then(res => res.json()),
+  ])
+    .then(([riskData, taskData, data]) => {
+      flaggedWardNames = new Set(riskData.flagged_wards.map(w => w.village));
+      const flaggedCount = riskData.flagged_wards?.length || 0;
+      riskSummaryCount.textContent = `${flaggedCount} flagged ward${flaggedCount === 1 ? '' : 's'}`;
+      const taskCount = taskData.total_tasks || 0;
+      taskSummaryCount.textContent = taskCount ? `${taskCount} task${taskCount === 1 ? '' : 's'} tracked` : 'Predict • Act • Protect';
+
+      const layer = L.geoJSON(data, {
+        style: (feature) => {
+          const wardName = feature.properties.mathare_ufn_village || feature.properties.name;
+          const highRisk = isHighRisk(wardName);
+          return {
+            color: highRisk ? '#c0392b' : '#333',
+            weight: highRisk ? 3 : 1,
+            dashArray: highRisk ? '6, 4' : null,
+            fillColor: colorForWard(wardName),
+            fillOpacity: 0.6,
+          };
+        },
+        onEachFeature: (feature, lyr) => {
+          const p = feature.properties;
+          const wardName = p.mathare_ufn_village || p.name || 'Ward';
+          const highRisk = isHighRisk(wardName);
+
+          // Permanent label at polygon center
+          if (lyr.getBounds && lyr.getBounds().isValid()) {
+            const center = lyr.getBounds().getCenter();
+            L.marker(center, {
+              icon: L.divIcon({
+                className: 'ward-label' + (highRisk ? ' high-risk' : ''),
+                html: wardName,
+                iconSize: null,
+              }),
+              interactive: false,
+            }).addTo(map);
+          }
+
+          // Click = toggle zoom + detail panel
+          lyr.on('click', () => {
+            map.fitBounds(lyr.getBounds(), { padding: [30, 30] });
+            resetBtn.style.display = 'block';
+            fetchWardDetail(feature.id, wardName);
+          });
+        },
+      }).addTo(map);
+
+      if (layer.getBounds().isValid()) {
+        fullViewBounds = layer.getBounds();
+        map.fitBounds(fullViewBounds, { padding: [20, 20] });
+      }
+      if (mapLoading) {
+        mapLoading.style.display = 'none';
+      }
+    })
+    .catch(err => {
+      console.error('Failed to load Mathare flood risk layer:', err);
+      if (mapLoading) {
+        mapLoading.textContent = 'Unable to load map data';
+      }
+    });
+
+  resetBtn.addEventListener('click', () => {
+    if (fullViewBounds) {
+      map.fitBounds(fullViewBounds, { padding: [20, 20] });
+    }
+    resetBtn.style.display = 'none';
+    detailPanel.style.display = 'none';
+  });
+
+  closeBtn.addEventListener('click', () => {
+    detailPanel.style.display = 'none';
+  });
+</script>
+{% endblock %}

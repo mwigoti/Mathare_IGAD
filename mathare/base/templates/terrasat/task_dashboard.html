@@ -1,0 +1,639 @@
+{% extends "terrasat/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================================
+     TERRASAT — MAINTENANCE TASK DASHBOARD
+     Enterprise Kanban / Operations UI
+     ============================================ */
+
+  :root {
+    --ts-bg: #F4F7F5;
+    --ts-surface: #FFFFFF;
+    --ts-surface-subtle: #F8FAF9;
+    --ts-surface-elevated: #FFFFFF;
+    --ts-border: #E1E8E5;
+    --ts-border-subtle: #EEF2F0;
+    --ts-text: #111A18;
+    --ts-text-secondary: #4A5B57;
+    --ts-text-muted: #7E918C;
+    --ts-brand: #152522;
+    --ts-brand-primary: #1E3833;
+    --ts-brand-sage: #4E8773;
+    --ts-brand-accent: #2C5E4E;
+    --ts-radius-xl: 18px;
+    --ts-radius-lg: 14px;
+    --ts-radius-md: 10px;
+    --ts-radius-sm: 8px;
+    --ts-shadow-sm: 0 1px 3px rgba(21, 37, 34, 0.04), 0 1px 2px rgba(21, 37, 34, 0.02);
+    --ts-shadow-md: 0 4px 12px rgba(21, 37, 34, 0.06), 0 2px 4px rgba(21, 37, 34, 0.03);
+    --ts-shadow-lg: 0 12px 32px rgba(21, 37, 34, 0.10), 0 4px 8px rgba(21, 37, 34, 0.04);
+    --ts-transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    --ts-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* Status palette */
+    --ts-reported: #C9A03F;
+    --ts-reported-bg: #FDF8E8;
+    --ts-verified: #3B82F6;
+    --ts-verified-bg: #EFF6FF;
+    --ts-progress: #6366F1;
+    --ts-progress-bg: #EEF2FF;
+    --ts-resolved: #2E7D46;
+    --ts-resolved-bg: #EAF7EE;
+    --ts-rejected: #9CA3AF;
+    --ts-rejected-bg: #F3F4F6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: var(--ts-font);
+    color: var(--ts-text);
+    background: var(--ts-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Navigation ── */
+  .ts-nav {
+    background: var(--ts-surface);
+    border-bottom: 1px solid var(--ts-border);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+  }
+  .ts-nav-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ts-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .ts-nav-logo {
+    width: 32px;
+    height: 32px;
+    background: var(--ts-brand);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ts-nav-logo img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+  }
+  .ts-nav-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ts-text);
+    letter-spacing: -0.01em;
+  }
+  .ts-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ts-nav-link {
+    padding: 6px 14px;
+    border-radius: var(--ts-radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ts-text-secondary);
+    text-decoration: none;
+    transition: var(--ts-transition);
+  }
+  .ts-nav-link:hover {
+    background: var(--ts-bg);
+    color: var(--ts-text);
+  }
+  .ts-nav-link.active {
+    background: var(--ts-brand-primary);
+    color: #fff;
+  }
+
+  /* ── Dashboard Shell ── */
+  #tk-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+  }
+
+  /* ── Page Header ── */
+  .ts-page-header {
+    margin-bottom: 24px;
+  }
+  .ts-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .ts-badge--ops {
+    background: #E8F4F0;
+    color: var(--ts-brand-accent);
+    border: 1px solid #C8E6D9;
+  }
+  .ts-page-header h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ts-text);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .ts-page-header p {
+    font-size: 14px;
+    color: var(--ts-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+    max-width: 640px;
+  }
+
+  /* ── Toolbar ── */
+  .tk-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  #tk-last-updated {
+    font-size: 12px;
+    color: var(--ts-text-muted);
+    font-weight: 500;
+  }
+  .tk-refresh-btn {
+    background: var(--ts-surface);
+    color: var(--ts-text-secondary);
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius-md);
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--ts-font);
+    cursor: pointer;
+    transition: var(--ts-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--ts-shadow-sm);
+  }
+  .tk-refresh-btn:hover {
+    background: var(--ts-surface-subtle);
+    border-color: var(--ts-text-muted);
+    color: var(--ts-text);
+    transform: translateY(-1px);
+    box-shadow: var(--ts-shadow-md);
+  }
+  .tk-refresh-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── Kanban Board ── */
+  .tk-board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(240px, 1fr));
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  /* ── Columns ── */
+  .tk-column {
+    background: var(--ts-surface-subtle);
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius-lg);
+    padding: 16px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    transition: var(--ts-transition);
+  }
+  .tk-column:hover {
+    border-color: #D1DCD7;
+  }
+
+  .tk-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ts-border-subtle);
+  }
+  .tk-column-header .title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .tk-column-header .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .tk-column-header .count {
+    background: var(--ts-surface);
+    border: 1px solid var(--ts-border);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ts-text-secondary);
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .tk-column[data-status="reported"] .dot { background: var(--ts-reported); box-shadow: 0 0 0 3px var(--ts-reported-bg); }
+  .tk-column[data-status="verified"] .dot { background: var(--ts-verified); box-shadow: 0 0 0 3px var(--ts-verified-bg); }
+  .tk-column[data-status="in_progress"] .dot { background: var(--ts-progress); box-shadow: 0 0 0 3px var(--ts-progress-bg); }
+  .tk-column[data-status="resolved"] .dot { background: var(--ts-resolved); box-shadow: 0 0 0 3px var(--ts-resolved-bg); }
+  .tk-column[data-status="rejected"] .dot { background: var(--ts-rejected); box-shadow: 0 0 0 3px var(--ts-rejected-bg); }
+
+  .tk-column[data-status="reported"] .title { color: var(--ts-reported); }
+  .tk-column[data-status="verified"] .title { color: var(--ts-verified); }
+  .tk-column[data-status="in_progress"] .title { color: var(--ts-progress); }
+  .tk-column[data-status="resolved"] .title { color: var(--ts-resolved); }
+  .tk-column[data-status="rejected"] .title { color: var(--ts-rejected); }
+
+  .tk-cards {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── Task Cards ── */
+  .tk-card {
+    background: var(--ts-surface);
+    border: 1px solid var(--ts-border-subtle);
+    border-top: 2px solid transparent;
+    border-radius: var(--ts-radius-md);
+    padding: 16px;
+    box-shadow: var(--ts-shadow-sm);
+    font-size: 13px;
+    transition: var(--ts-transition);
+  }
+  .tk-card:hover {
+    box-shadow: var(--ts-shadow-md);
+    transform: translateY(-1px);
+    border-color: var(--ts-border);
+  }
+
+  .tk-column[data-status="reported"] .tk-card { border-top-color: var(--ts-reported); }
+  .tk-column[data-status="verified"] .tk-card { border-top-color: var(--ts-verified); }
+  .tk-column[data-status="in_progress"] .tk-card { border-top-color: var(--ts-progress); }
+  .tk-column[data-status="resolved"] .tk-card { border-top-color: var(--ts-resolved); }
+  .tk-column[data-status="rejected"] .tk-card { border-top-color: var(--ts-rejected); }
+
+  .tk-card .cat {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--ts-bg);
+    color: var(--ts-brand-primary);
+    margin-bottom: 10px;
+    width: fit-content;
+  }
+  .tk-card .ward {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ts-text);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .tk-card .desc {
+    background: var(--ts-surface-subtle);
+    border: 1px solid var(--ts-border-subtle);
+    border-radius: var(--ts-radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    color: var(--ts-text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .tk-card .meta {
+    font-size: 11px;
+    color: var(--ts-text-muted);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .tk-card .phone {
+    font-size: 12px;
+    color: var(--ts-text-muted);
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tk-card .phone::before {
+    content: '☎';
+    font-size: 11px;
+  }
+
+  /* ── Action Buttons ── */
+  .tk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tk-action-btn {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--ts-font);
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    color: var(--ts-text-secondary);
+    border-radius: var(--ts-radius-sm);
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: var(--ts-transition);
+  }
+  .tk-action-btn:hover {
+    background: var(--ts-bg);
+    border-color: var(--ts-text-muted);
+    transform: translateY(-1px);
+    box-shadow: var(--ts-shadow-sm);
+  }
+  .tk-action-btn:active {
+    transform: translateY(0);
+  }
+  .tk-action-btn.resolve {
+    border-color: var(--ts-resolved);
+    color: var(--ts-resolved);
+    background: var(--ts-resolved-bg);
+  }
+  .tk-action-btn.resolve:hover {
+    background: var(--ts-resolved);
+    color: #fff;
+    border-color: var(--ts-resolved);
+  }
+  .tk-action-btn.reject {
+    border-color: var(--ts-rejected);
+    color: var(--ts-rejected);
+    background: var(--ts-rejected-bg);
+  }
+  .tk-action-btn.reject:hover {
+    background: var(--ts-rejected);
+    color: #fff;
+    border-color: var(--ts-rejected);
+  }
+
+  /* ── Empty State ── */
+  .tk-empty {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--ts-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.5);
+    border-radius: var(--ts-radius-md);
+    border: 1px dashed var(--ts-border);
+  }
+
+  /* ── Loading State ── */
+  .tk-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ts-text-muted);
+    font-size: 14px;
+    background: var(--ts-surface);
+    border: 1px dashed var(--ts-border);
+    border-radius: var(--ts-radius-lg);
+    grid-column: 1 / -1;
+  }
+  .tk-loading::after {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid var(--ts-border);
+    border-top-color: var(--ts-brand-sage);
+    border-radius: 50%;
+    margin: 16px auto 0;
+    animation: ts-spin 0.8s linear infinite;
+  }
+  @keyframes ts-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) {
+    .tk-board { grid-template-columns: repeat(5, minmax(260px, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .ts-nav-inner { padding: 0 16px; }
+    .ts-nav-name { display: none; }
+    #tk-wrapper { padding: 20px 16px 40px; }
+    .ts-page-header h2 { font-size: 22px; }
+    .tk-toolbar { flex-direction: column; align-items: flex-start; }
+    .tk-board { gap: 12px; }
+    .tk-column { min-width: 280px; }
+  }
+
+  /* ── Accessibility ── */
+  .tk-refresh-btn:focus-visible,
+  .tk-action-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78, 135, 115, 0.25);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+<!-- Navigation -->
+<nav class="ts-nav">
+  <div class="ts-nav-inner">
+    <a href="/" class="ts-nav-brand">
+      <div class="ts-nav-logo">
+        <img src="{% static 'images/logo.png' %}" alt="" onerror="this.style.display='none'">
+      </div>
+      <span class="ts-nav-name">Terrasat</span>
+    </a>
+    <div class="ts-nav-links">
+      <a href="/" class="ts-nav-link">Map View</a>
+      <a href="{% url 'high_risk_dashboard' %}" class="ts-nav-link">Risk Dashboard</a>
+      <a href="{% url 'task_dashboard' %}" class="ts-nav-link active">Tasks</a>
+    </div>
+  </div>
+</nav>
+
+<div id="tk-wrapper">
+  <header class="ts-page-header">
+    <div class="ts-badge ts-badge--ops">Operations</div>
+    <h2>Maintenance Task Dashboard</h2>
+    <p>Community-reported issues (blocked drainage, water hazards, etc.), triaged here. Marking a task Resolved sends an SMS back to whoever reported it.</p>
+  </header>
+
+  <div class="tk-toolbar">
+    <span id="tk-last-updated"></span>
+    <button class="tk-refresh-btn" id="tk-refresh-btn">&#x21BA; Refresh</button>
+  </div>
+
+  <div class="tk-board" id="tk-board">
+    <div class="tk-column" data-status="reported">
+      <div class="tk-column-header">
+        <span class="title"><span class="dot"></span> Reported</span>
+        <span class="count" id="count-reported">0</span>
+      </div>
+      <div class="tk-cards" id="cards-reported"></div>
+    </div>
+    <div class="tk-column" data-status="verified">
+      <div class="tk-column-header">
+        <span class="title"><span class="dot"></span> Verified</span>
+        <span class="count" id="count-verified">0</span>
+      </div>
+      <div class="tk-cards" id="cards-verified"></div>
+    </div>
+    <div class="tk-column" data-status="in_progress">
+      <div class="tk-column-header">
+        <span class="title"><span class="dot"></span> In Progress</span>
+        <span class="count" id="count-in_progress">0</span>
+      </div>
+      <div class="tk-cards" id="cards-in_progress"></div>
+    </div>
+    <div class="tk-column" data-status="resolved">
+      <div class="tk-column-header">
+        <span class="title"><span class="dot"></span> Resolved</span>
+        <span class="count" id="count-resolved">0</span>
+      </div>
+      <div class="tk-cards" id="cards-resolved"></div>
+    </div>
+    <div class="tk-column" data-status="rejected">
+      <div class="tk-column-header">
+        <span class="title"><span class="dot"></span> Rejected</span>
+        <span class="count" id="count-rejected">0</span>
+      </div>
+      <div class="tk-cards" id="cards-rejected"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* =========================================================
+     BELOW IS YOUR EXACT ORIGINAL JAVASCRIPT — UNCHANGED
+     ========================================================= */
+  const STATUSES = ["reported", "verified", "in_progress", "resolved", "rejected"];
+
+  // Which action buttons show on a card, depending on its CURRENT status —
+  // avoids showing a "Resolve" button on something already resolved, etc.
+  const NEXT_ACTIONS = {
+    reported: [["verified", "Verify"], ["rejected", "Reject"]],
+    verified: [["in_progress", "Start work"], ["rejected", "Reject"]],
+    in_progress: [["resolved", "Resolve"]],
+    resolved: [],
+    rejected: [["reported", "Reopen"]],
+  };
+
+  function getCookie(name) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return match ? match.pop() : '';
+  }
+
+  function renderCard(task) {
+    const actions = NEXT_ACTIONS[task.status] || [];
+    const actionButtons = actions.map(([newStatus, label]) => {
+      const cls = newStatus === "resolved" ? "resolve" : (newStatus === "rejected" ? "reject" : "");
+      return `<button class="tk-action-btn ${cls}" onclick="updateStatus(${task.id}, '${newStatus}', this)">${label}</button>`;
+    }).join('');
+
+    return `
+      <div class="tk-card" data-task-id="${task.id}">
+        <div class="cat">${task.category_label}</div>
+        <div class="ward">${task.ward_name || 'Unknown ward'}</div>
+        ${task.description ? `<div class="desc">${task.description}</div>` : ''}
+        <div class="meta">Reported ${task.created_at}${task.resolved_at ? ' · Resolved ' + task.resolved_at : ''}</div>
+        <div class="phone">${task.reported_by_phone || 'unknown number'}</div>
+        <div class="tk-actions">${actionButtons}</div>
+      </div>
+    `;
+  }
+
+  function loadTasks() {
+    fetch("{% url 'task_list' %}")
+      .then(res => res.json())
+      .then(data => {
+        const byStatus = { reported: [], verified: [], in_progress: [], resolved: [], rejected: [] };
+        data.tasks.forEach(t => { if (byStatus[t.status]) byStatus[t.status].push(t); });
+
+        STATUSES.forEach(status => {
+          const container = document.getElementById('cards-' + status);
+          const countEl = document.getElementById('count-' + status);
+          const tasks = byStatus[status];
+          countEl.textContent = tasks.length;
+          container.innerHTML = tasks.length
+            ? tasks.map(renderCard).join('')
+            : '<div class="tk-empty">Nothing here</div>';
+        });
+
+        document.getElementById('tk-last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      })
+      .catch(err => console.error('Failed to load tasks:', err));
+  }
+
+  function updateStatus(taskId, newStatus, btn) {
+    if (newStatus === 'resolved') {
+      const confirmed = confirm('Mark this resolved? This sends an SMS to the person who reported it.');
+      if (!confirmed) return;
+    }
+
+    btn.disabled = true;
+    fetch(`/tasks/${taskId}/update-status/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: 'new_status=' + encodeURIComponent(newStatus),
+    })
+      .then(res => res.json())
+      .then(() => loadTasks())
+      .catch(err => {
+        console.error(err);
+        btn.disabled = false;
+      });
+  }
+
+  document.getElementById('tk-refresh-btn').addEventListener('click', loadTasks);
+  loadTasks();
+</script>
+{% endblock %}
