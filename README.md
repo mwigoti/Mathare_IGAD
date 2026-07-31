@@ -1,6 +1,6 @@
-# TerraSat Mathare
+# NEWIS
 
-TerraSat Mathare is a Django-based geospatial decision-support platform for flood-risk awareness, ward-level infrastructure monitoring, and community issue reporting in Mathare. The project combines GIS data, a public-facing interactive map, USSD-based resident reporting, and staff dashboards for triaging maintenance tasks and reviewing flood-risk information.
+NEWIS is a Django-based geospatial decision-support platform for flood-risk awareness, ward-level infrastructure monitoring, and community issue reporting in Mathare. The project combines GIS data, a public-facing interactive map, USSD-based resident reporting, and staff dashboards for triaging maintenance tasks and reviewing flood-risk information.
 
 This repository contains the application logic, templates, GIS models, and URL routes that power the platform.
 
@@ -10,7 +10,7 @@ NOTE THE ANALYSIS ENGINE IS AT: https://github.com/mwigoti/IGAD.git
 
 ## Executive summary
 
-TerraSat Mathare is a Django and GIS-based platform for helping communities and local responders understand flood risk, report infrastructure issues, and manage maintenance work in Mathare. The project combines a public map, ward-level analytics, USSD-based reporting, and staff dashboards into one operational workflow.
+NEWIS is a Django and GIS-based platform for helping communities and local responders understand flood risk, report infrastructure issues, and manage maintenance work in Mathare. The project combines a public map, ward-level analytics, USSD-based reporting, and staff dashboards into one operational workflow.
 
 This repository is the implementation foundation for a practical, community-centered flood-response system.
 
