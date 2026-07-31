@@ -1,0 +1,5 @@
+Django
+dj-database-url
+python-dotenv
+africastalking
+psycopg2-binary
