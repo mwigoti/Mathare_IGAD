@@ -5,7 +5,7 @@ TerraSat Mathare is a Django-based geospatial decision-support platform for floo
 This repository contains the application logic, templates, GIS models, and URL routes that power the platform.
 
 ---
-NOTE THE DASHBOARD AND REST OF PIPELINE CODE IS AT: https://github.com/mwigoti/IGAD.git
+NOTE THE ANALYSIS ENGINE IS AT: https://github.com/mwigoti/IGAD.git
 ---
 
 ## Executive summary
