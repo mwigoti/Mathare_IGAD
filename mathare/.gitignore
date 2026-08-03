@@ -15,6 +15,9 @@ htmlcov/
 # Virtual Environment
 # ==========================================
 venv/
+.venv/
+venv
+.venv
 
 # ==========================================
 # Environment Variables
