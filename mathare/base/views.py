@@ -4,7 +4,6 @@ import json
 
 import africastalking
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.gis.db.models.functions import Length
 from django.core.serializers import serialize
 from django.db.models import Avg, Count, Sum
@@ -502,7 +501,6 @@ HIGH_RISK_ALERT_MSG = {
 }
 
 
-@staff_member_required
 def high_risk_clear_cache(request):
     """Manual cache-bust — call this after re-importing/updating the underlying gpkg data, since the grid registry is cached for 24h."""
     from .high_risk import clear_grid_cache
@@ -539,13 +537,11 @@ def task_public_summary(request):
     })
 
 
-@staff_member_required
 def high_risk_dashboard(request):
     """Renders the visual dashboard page; it fetches /high-risk/review/ itself via JS."""
     return render(request, "terrasat/high_risk_dashboard.html")
 
 
-@staff_member_required
 def high_risk_review(request):
     """
     GET-only summary screen: shows flagged high-risk grids, who would
@@ -558,7 +554,6 @@ def high_risk_review(request):
     return JsonResponse(summary)
 
 
-@staff_member_required
 def high_risk_send_alerts(request):
     """
     POST-only: sends the flood alert SMS. If a `village` param is
@@ -652,13 +647,11 @@ def set_task_status(task, new_status):
     return task
 
 
-@staff_member_required
 def task_dashboard(request):
     """Renders the staff task-triage dashboard; fetches data itself via JS."""
     return render(request, "terrasat/task_dashboard.html")
 
 
-@staff_member_required
 def task_list(request):
     """JSON list of all maintenance tasks, most recent first. Optional ?status=reported filter."""
     qs = MaintenanceTask.objects.all()
@@ -684,7 +677,6 @@ def task_list(request):
     return JsonResponse({"tasks": tasks})
 
 
-@staff_member_required
 def task_update_status(request, task_id):
     """
     POST-only status change for a single task. 'resolved' triggers the
